@@ -13,7 +13,7 @@ override_dh_auto_build:
 	PYTHONPATH=$(shell pybuild --print build_dir --interpreter python3) \
 	   http_proxy='127.0.0.1:9' \
 	   https_proxy='127.0.0.1:9' \
-	   sphinx-build -N -b html docs/ $(CURDIR)/.pybuild/docs/html/
+	   python3 -m sphinx -N -b html docs/ $(CURDIR)/.pybuild/docs/html/
 
 override_dh_compress:
 	dh_compress -Xchangelog.html
