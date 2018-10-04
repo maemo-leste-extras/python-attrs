@@ -1,3 +1,9 @@
+python-attrs (17.4.0-2~bpo9+1) stretch-backports; urgency=medium
+
+  * Rebuild for stretch-backports.
+
+ -- Andrej Shadura <andrewsh@debian.org>  Thu, 04 Oct 2018 11:17:40 +0200
+
 python-attrs (17.4.0-2) unstable; urgency=medium
 
   [ Ondřej Nový ]
