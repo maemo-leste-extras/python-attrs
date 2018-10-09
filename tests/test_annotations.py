@@ -11,6 +11,7 @@ import pytest
 
 import attr
 
+from attr._make import _classvar_prefixes
 from attr.exceptions import UnannotatedAttributeError
 
 
@@ -23,6 +24,7 @@ class TestAnnotations:
         """
         Sets the `Attribute.type` attr from basic type annotations.
         """
+
         @attr.s
         class C:
             x: int = attr.ib()
@@ -32,12 +34,18 @@ class TestAnnotations:
         assert int is attr.fields(C).x.type
         assert str is attr.fields(C).y.type
         assert None is attr.fields(C).z.type
+        assert C.__init__.__annotations__ == {
+            "x": int,
+            "y": str,
+            "return": None,
+        }
 
     def test_catches_basic_type_conflict(self):
         """
         Raises ValueError if type is specified both ways.
         """
         with pytest.raises(ValueError) as e:
+
             @attr.s
             class C:
                 x: int = attr.ib(type=int)
@@ -50,6 +58,7 @@ class TestAnnotations:
         """
         Sets the `Attribute.type` attr from typing annotations.
         """
+
         @attr.s
         class C:
             x: typing.List[int] = attr.ib()
@@ -57,17 +66,27 @@ class TestAnnotations:
 
         assert typing.List[int] is attr.fields(C).x.type
         assert typing.Optional[str] is attr.fields(C).y.type
+        assert C.__init__.__annotations__ == {
+            "x": typing.List[int],
+            "y": typing.Optional[str],
+            "return": None,
+        }
 
     def test_only_attrs_annotations_collected(self):
         """
         Annotations that aren't set to an attr.ib are ignored.
         """
+
         @attr.s
         class C:
             x: typing.List[int] = attr.ib()
             y: int
 
         assert 1 == len(attr.fields(C))
+        assert C.__init__.__annotations__ == {
+            "x": typing.List[int],
+            "return": None,
+        }
 
     @pytest.mark.parametrize("slots", [True, False])
     def test_auto_attribs(self, slots):
@@ -75,6 +94,7 @@ class TestAnnotations:
         If *auto_attribs* is True, bare annotations are collected too.
         Defaults work and class variables are ignored.
         """
+
         @attr.s(auto_attribs=True, slots=slots)
         class C:
             cls_var: typing.ClassVar[int] = 23
@@ -115,12 +135,22 @@ class TestAnnotations:
             i.y = 23
             assert 23 == i.y
 
+        assert C.__init__.__annotations__ == {
+            "a": int,
+            "x": typing.List[int],
+            "y": int,
+            "z": int,
+            "foo": typing.Any,
+            "return": None,
+        }
+
     @pytest.mark.parametrize("slots", [True, False])
     def test_auto_attribs_unannotated(self, slots):
         """
         Unannotated `attr.ib`s raise an error.
         """
         with pytest.raises(UnannotatedAttributeError) as e:
+
             @attr.s(slots=slots, auto_attribs=True)
             class C:
                 v = attr.ib()
@@ -135,11 +165,12 @@ class TestAnnotations:
     @pytest.mark.parametrize("slots", [True, False])
     def test_auto_attribs_subclassing(self, slots):
         """
-        Attributes from super classes are inherited, it doesn't matter if the
+        Attributes from base classes are inherited, it doesn't matter if the
         subclass has annotations or not.
 
         Ref #291
         """
+
         @attr.s(slots=slots, auto_attribs=True)
         class A:
             a: int = 1
@@ -154,3 +185,83 @@ class TestAnnotations:
 
         assert "B(a=1, b=2)" == repr(B())
         assert "C(a=1)" == repr(C())
+
+        assert A.__init__.__annotations__ == {"a": int, "return": None}
+        assert B.__init__.__annotations__ == {
+            "a": int,
+            "b": int,
+            "return": None,
+        }
+        assert C.__init__.__annotations__ == {"a": int, "return": None}
+
+    def test_converter_annotations(self):
+        """
+        Attributes with converters don't have annotations.
+        """
+
+        @attr.s(auto_attribs=True)
+        class A:
+            a: int = attr.ib(converter=int)
+
+        assert A.__init__.__annotations__ == {"return": None}
+
+    @pytest.mark.parametrize("slots", [True, False])
+    @pytest.mark.parametrize("classvar", _classvar_prefixes)
+    def test_annotations_strings(self, slots, classvar):
+        """
+        String annotations are passed into __init__ as is.
+        """
+
+        @attr.s(auto_attribs=True, slots=slots)
+        class C:
+            cls_var: classvar + "[int]" = 23
+            a: "int"
+            x: "typing.List[int]" = attr.Factory(list)
+            y: "int" = 2
+            z: "int" = attr.ib(default=3)
+            foo: "typing.Any" = None
+
+        assert C.__init__.__annotations__ == {
+            "a": "int",
+            "x": "typing.List[int]",
+            "y": "int",
+            "z": "int",
+            "foo": "typing.Any",
+            "return": None,
+        }
+
+    def test_keyword_only_auto_attribs(self):
+        """
+        `kw_only` propagates to attributes defined via `auto_attribs`.
+        """
+
+        @attr.s(auto_attribs=True, kw_only=True)
+        class C:
+            x: int
+            y: int
+
+        with pytest.raises(TypeError):
+            C(0, 1)
+
+        with pytest.raises(TypeError):
+            C(x=0)
+
+        c = C(x=0, y=1)
+
+        assert c.x == 0
+        assert c.y == 1
+
+    def test_base_class_variable(self):
+        """
+        Base class' class variables can be overridden with an attribute
+        without resorting to using an explicit `attr.ib()`.
+        """
+
+        class Base:
+            x: int = 42
+
+        @attr.s(auto_attribs=True)
+        class C(Base):
+            x: int
+
+        assert 1 == C(1).x

@@ -14,7 +14,13 @@ from hypothesis.strategies import booleans
 import attr
 
 from attr._make import (
-    NOTHING, Factory, _add_init, _add_repr, _Nothing, fields, make_class
+    NOTHING,
+    Factory,
+    _add_init,
+    _add_repr,
+    _Nothing,
+    fields,
+    make_class,
 )
 from attr.validators import instance_of
 
@@ -27,9 +33,19 @@ ReprC = simple_class(repr=True)
 ReprCSlots = simple_class(repr=True, slots=True)
 
 # HashC is hashable by explicit definition while HashCSlots is hashable
-# implicitly.
+# implicitly.  The "Cached" versions are the same, except with hash code
+# caching enabled
 HashC = simple_class(hash=True)
 HashCSlots = simple_class(hash=None, cmp=True, frozen=True, slots=True)
+HashCCached = simple_class(hash=True, cache_hash=True)
+HashCSlotsCached = simple_class(
+    hash=None, cmp=True, frozen=True, slots=True, cache_hash=True
+)
+# the cached hash code is stored slightly differently in this case
+# so it needs to be tested separately
+HashCFrozenNotSlotsCached = simple_class(
+    frozen=True, slots=False, hash=True, cache_hash=True
+)
 
 
 class InitC(object):
@@ -43,15 +59,15 @@ class TestAddCmp(object):
     """
     Tests for `_add_cmp`.
     """
+
     @given(booleans())
     def test_cmp(self, slots):
         """
         If `cmp` is False, ignore that attribute.
         """
-        C = make_class("C", {
-            "a": attr.ib(cmp=False),
-            "b": attr.ib()
-        }, slots=slots)
+        C = make_class(
+            "C", {"a": attr.ib(cmp=False), "b": attr.ib()}, slots=slots
+        )
 
         assert C(1, 2) == C(2, 2)
 
@@ -77,9 +93,11 @@ class TestAddCmp(object):
         Unequal objects of different type are detected even if their attributes
         match.
         """
+
         class NotCmpC(object):
             a = 1
             b = 2
+
         assert cls(1, 2) != NotCmpC()
         assert not (cls(1, 2) == NotCmpC())
 
@@ -89,8 +107,8 @@ class TestAddCmp(object):
         __lt__ compares objects as tuples of attribute values.
         """
         for a, b in [
-            ((1, 2),  (2, 1)),
-            ((1, 2),  (1, 3)),
+            ((1, 2), (2, 1)),
+            ((1, 2), (1, 3)),
             (("a", "b"), ("b", "a")),
         ]:
             assert cls(*a) < cls(*b)
@@ -108,9 +126,9 @@ class TestAddCmp(object):
         __le__ compares objects as tuples of attribute values.
         """
         for a, b in [
-            ((1, 2),  (2, 1)),
-            ((1, 2),  (1, 3)),
-            ((1, 1),  (1, 1)),
+            ((1, 2), (2, 1)),
+            ((1, 2), (1, 3)),
+            ((1, 1), (1, 1)),
             (("a", "b"), ("b", "a")),
             (("a", "b"), ("a", "b")),
         ]:
@@ -168,15 +186,15 @@ class TestAddRepr(object):
     """
     Tests for `_add_repr`.
     """
+
     @pytest.mark.parametrize("slots", [True, False])
     def test_repr(self, slots):
         """
         If `repr` is False, ignore that attribute.
         """
-        C = make_class("C", {
-            "a": attr.ib(repr=False),
-            "b": attr.ib()
-        }, slots=slots)
+        C = make_class(
+            "C", {"a": attr.ib(repr=False), "b": attr.ib()}, slots=slots
+        )
 
         assert "C(b=2)" == repr(C(1, 2))
 
@@ -187,10 +205,26 @@ class TestAddRepr(object):
         """
         assert "C(a=1, b=2)" == repr(cls(1, 2))
 
+    def test_infinite_recursion(self):
+        """
+        In the presence of a cyclic graph, repr will emit an ellipsis and not
+        raise an exception.
+        """
+
+        @attr.s
+        class Cycle(object):
+            value = attr.ib(default=7)
+            cycle = attr.ib(default=None)
+
+        cycle = Cycle()
+        cycle.cycle = cycle
+        assert "Cycle(value=7, cycle=...)" == repr(cycle)
+
     def test_underscores(self):
         """
         repr does not strip underscores.
         """
+
         class C(object):
             __attrs_attrs__ = [simple_attr("_x")]
 
@@ -204,9 +238,7 @@ class TestAddRepr(object):
         """
         repr signals unset attributes
         """
-        C = make_class("C", {
-            "a": attr.ib(init=False),
-        })
+        C = make_class("C", {"a": attr.ib(init=False)})
 
         assert "C(a=NOTHING)" == repr(C())
 
@@ -218,6 +250,7 @@ class TestAddRepr(object):
         This only makes sense when subclassing a class with an poor __str__
         (like Exceptions).
         """
+
         @attr.s(str=add_str, slots=slots)
         class Error(Exception):
             x = attr.ib()
@@ -242,6 +275,7 @@ class TestAddHash(object):
     """
     Tests for `_add_hash`.
     """
+
     def test_enforces_type(self):
         """
         The `hash` argument to both attrs and attrib must be None, True, or
@@ -259,13 +293,52 @@ class TestAddHash(object):
 
         assert exc_args == e.value.args
 
-    @given(booleans())
-    def test_hash_attribute(self, slots):
+    def test_enforce_no_cache_hash_without_hash(self):
+        """
+        Ensure exception is thrown if caching the hash code is requested
+        but attrs is not requested to generate `__hash__`.
+        """
+        exc_args = (
+            "Invalid value for cache_hash.  To use hash caching,"
+            " hashing must be either explicitly or implicitly "
+            "enabled.",
+        )
+        with pytest.raises(TypeError) as e:
+            make_class("C", {}, hash=False, cache_hash=True)
+        assert exc_args == e.value.args
+
+        # unhashable case
+        with pytest.raises(TypeError) as e:
+            make_class(
+                "C", {}, hash=None, cmp=True, frozen=False, cache_hash=True
+            )
+        assert exc_args == e.value.args
+
+    def test_enforce_no_cached_hash_without_init(self):
+        """
+        Ensure exception is thrown if caching the hash code is requested
+        but attrs is not requested to generate `__init__`.
+        """
+        exc_args = (
+            "Invalid value for cache_hash.  To use hash caching,"
+            " init must be True.",
+        )
+        with pytest.raises(TypeError) as e:
+            make_class("C", {}, init=False, hash=True, cache_hash=True)
+        assert exc_args == e.value.args
+
+    @given(booleans(), booleans())
+    def test_hash_attribute(self, slots, cache_hash):
         """
         If `hash` is False on an attribute, ignore that attribute.
         """
-        C = make_class("C", {"a": attr.ib(hash=False), "b": attr.ib()},
-                       slots=slots, hash=True)
+        C = make_class(
+            "C",
+            {"a": attr.ib(hash=False), "b": attr.ib()},
+            slots=slots,
+            hash=True,
+            cache_hash=cache_hash,
+        )
 
         assert hash(C(1, 2)) == hash(C(2, 2))
 
@@ -303,12 +376,26 @@ class TestAddHash(object):
             assert C(1) != C(1)
             assert hash(C(1)) != hash(C(1))
 
-    @pytest.mark.parametrize("cls", [HashC, HashCSlots])
+    @pytest.mark.parametrize(
+        "cls",
+        [
+            HashC,
+            HashCSlots,
+            HashCCached,
+            HashCSlotsCached,
+            HashCFrozenNotSlotsCached,
+        ],
+    )
     def test_hash_works(self, cls):
         """
         __hash__ returns different hashes for different values.
         """
-        assert hash(cls(1, 2)) != hash(cls(1, 1))
+        a = cls(1, 2)
+        b = cls(1, 1)
+        assert hash(a) != hash(b)
+        # perform the test again to test the pre-cached path through
+        # __hash__ for the cached-hash versions
+        assert hash(a) != hash(b)
 
     def test_hash_default(self):
         """
@@ -324,24 +411,71 @@ class TestAddHash(object):
             "unhashable type: 'C'",  # CPython
         )
 
+    def test_cache_hashing(self):
+        """
+        Ensure that hash computation if cached if and only if requested
+        """
+
+        class HashCounter:
+            """
+            A class for testing which counts how many times its hash
+            has been requested
+            """
+
+            def __init__(self):
+                self.times_hash_called = 0
+
+            def __hash__(self):
+                self.times_hash_called += 1
+                return 12345
+
+        Uncached = make_class(
+            "Uncached",
+            {"hash_counter": attr.ib(factory=HashCounter)},
+            hash=True,
+            cache_hash=False,
+        )
+        Cached = make_class(
+            "Cached",
+            {"hash_counter": attr.ib(factory=HashCounter)},
+            hash=True,
+            cache_hash=True,
+        )
+
+        uncached_instance = Uncached()
+        cached_instance = Cached()
+
+        hash(uncached_instance)
+        hash(uncached_instance)
+        hash(cached_instance)
+        hash(cached_instance)
+
+        assert 2 == uncached_instance.hash_counter.times_hash_called
+        assert 1 == cached_instance.hash_counter.times_hash_called
+
 
 class TestAddInit(object):
     """
     Tests for `_add_init`.
     """
+
     @given(booleans(), booleans())
     def test_init(self, slots, frozen):
         """
         If `init` is False, ignore that attribute.
         """
-        C = make_class("C", {"a": attr.ib(init=False), "b": attr.ib()},
-                       slots=slots, frozen=frozen)
+        C = make_class(
+            "C",
+            {"a": attr.ib(init=False), "b": attr.ib()},
+            slots=slots,
+            frozen=frozen,
+        )
         with pytest.raises(TypeError) as e:
             C(a=1, b=2)
 
         assert (
-            "__init__() got an unexpected keyword argument 'a'" ==
-            e.value.args[0]
+            "__init__() got an unexpected keyword argument 'a'"
+            == e.value.args[0]
         )
 
     @given(booleans(), booleans())
@@ -350,11 +484,16 @@ class TestAddInit(object):
         If `init` is False but a Factory is specified, don't allow passing that
         argument but initialize it anyway.
         """
-        C = make_class("C", {
-            "_a": attr.ib(init=False, default=42),
-            "_b": attr.ib(init=False, default=Factory(list)),
-            "c": attr.ib()
-        }, slots=slots, frozen=frozen)
+        C = make_class(
+            "C",
+            {
+                "_a": attr.ib(init=False, default=42),
+                "_b": attr.ib(init=False, default=Factory(list)),
+                "c": attr.ib(),
+            },
+            slots=slots,
+            frozen=frozen,
+        )
         with pytest.raises(TypeError):
             C(a=1, c=2)
         with pytest.raises(TypeError):
@@ -369,10 +508,12 @@ class TestAddInit(object):
         If an attribute is `init=False`, it's legal to come after a mandatory
         attribute.
         """
-        make_class("C", {
-            "a": attr.ib(default=Factory(list)),
-            "b": attr.ib(init=False),
-        }, slots=slots, frozen=frozen)
+        make_class(
+            "C",
+            {"a": attr.ib(default=Factory(list)), "b": attr.ib(init=False)},
+            slots=slots,
+            frozen=frozen,
+        )
 
     def test_sets_attributes(self):
         """
@@ -386,6 +527,7 @@ class TestAddInit(object):
         """
         If a default value is present, it's used as fallback.
         """
+
         class C(object):
             __attrs_attrs__ = [
                 simple_attr(name="a", default=2),
@@ -403,6 +545,7 @@ class TestAddInit(object):
         """
         If a default factory is present, it's used as fallback.
         """
+
         class D(object):
             pass
 
@@ -411,6 +554,7 @@ class TestAddInit(object):
                 simple_attr(name="a", default=Factory(list)),
                 simple_attr(name="b", default=Factory(D)),
             ]
+
         C = _add_init(C, False)
         i = C()
 
@@ -422,6 +566,7 @@ class TestAddInit(object):
         If a validator is passed, call it with the preliminary instance, the
         Attribute, and the argument.
         """
+
         class VException(Exception):
             pass
 
@@ -432,7 +577,7 @@ class TestAddInit(object):
         with pytest.raises(VException) as e:
             C(42)
 
-        assert (fields(C).a, 42,) == e.value.args[1:]
+        assert (fields(C).a, 42) == e.value.args[1:]
         assert isinstance(e.value.args[0], C)
 
     def test_validator_slots(self):
@@ -440,6 +585,7 @@ class TestAddInit(object):
         If a validator is passed, call it with the preliminary instance, the
         Attribute, and the argument.
         """
+
         class VException(Exception):
             pass
 
@@ -450,7 +596,7 @@ class TestAddInit(object):
         with pytest.raises(VException) as e:
             C(42)
 
-        assert (fields(C)[0], 42,) == e.value.args[1:]
+        assert (fields(C)[0], 42) == e.value.args[1:]
         assert isinstance(e.value.args[0], C)
 
     @given(booleans())
@@ -458,9 +604,9 @@ class TestAddInit(object):
         """
         Does not interfere when setting non-attrs attributes.
         """
-        C = make_class("C", {
-            "a": attr.ib("a", validator=instance_of(int))
-        }, slots=slots)
+        C = make_class(
+            "C", {"a": attr.ib("a", validator=instance_of(int))}, slots=slots
+        )
         i = C(1)
 
         assert 1 == i.a
@@ -477,6 +623,7 @@ class TestAddInit(object):
         The argument names in `__init__` are without leading and trailing
         underscores.
         """
+
         class C(object):
             __attrs_attrs__ = [simple_attr("_private")]
 
@@ -489,6 +636,7 @@ class TestNothing(object):
     """
     Tests for `_Nothing`.
     """
+
     def test_copy(self):
         """
         __copy__ returns the same object.

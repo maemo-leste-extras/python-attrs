@@ -145,6 +145,73 @@ Therefore ``@attr.s`` comes with the ``repr_ns`` option to set it manually:
 On Python 3 it overrides the implicit detection.
 
 
+Keyword-only Attributes
+~~~~~~~~~~~~~~~~~~~~~~~
+
+When using ``attrs`` on Python 3, you can also add `keyword-only <https://docs.python.org/3/glossary.html#keyword-only-parameter>`_ attributes:
+
+.. doctest::
+
+    >>> @attr.s
+    ... class A:
+    ...     a = attr.ib(kw_only=True)
+    >>> A()
+    Traceback (most recent call last):
+      ...
+    TypeError: A() missing 1 required keyword-only argument: 'a'
+    >>> A(a=1)
+    A(a=1)
+
+``kw_only`` may also be specified at via ``attr.s``, and will apply to all attributes:
+
+.. doctest::
+
+    >>> @attr.s(kw_only=True)
+    ... class A:
+    ...     a = attr.ib()
+    ...     b = attr.ib()
+    >>> A(1, 2)
+    Traceback (most recent call last):
+      ...
+    TypeError: __init__() takes 1 positional argument but 3 were given
+    >>> A(a=1, b=2)
+    A(a=1, b=2)
+
+
+
+If you create an attribute with ``init=False``, the ``kw_only`` argument is ignored.
+
+Keyword-only attributes allow subclasses to add attributes without default values, even if the base class defines attributes with default values:
+
+.. doctest::
+
+    >>> @attr.s
+    ... class A:
+    ...     a = attr.ib(default=0)
+    >>> @attr.s
+    ... class B(A):
+    ...     b = attr.ib(kw_only=True)
+    >>> B(b=1)
+    B(a=0, b=1)
+    >>> B()
+    Traceback (most recent call last):
+      ...
+    TypeError: B() missing 1 required keyword-only argument: 'b'
+
+If you don't set ``kw_only=True``, then there's is no valid attribute ordering and you'll get an error:
+
+.. doctest::
+
+    >>> @attr.s
+    ... class A:
+    ...     a = attr.ib(default=0)
+    >>> @attr.s
+    ... class B(A):
+    ...     b = attr.ib()
+    Traceback (most recent call last):
+      ...
+    ValueError: No mandatory attributes allowed after an attribute with a default value or factory.  Attribute in question: Attribute(name='b', default=NOTHING, validator=None, repr=True, cmp=True, hash=None, init=True, convert=None, metadata=mappingproxy({}), type=None, kw_only=False)
+
 .. _asdict:
 
 Converting to Collections Types
@@ -218,8 +285,6 @@ Other times, all you want is a tuple and ``attrs`` won't let you down:
    True
 
 
-
-
 Defaults
 --------
 
@@ -264,7 +329,7 @@ And sometimes you even want mutable objects as default values (ever used acciden
    >>> cp
    ConnectionPool(db_string='postgres://localhost', pool=deque([Connection(socket=42)]), debug=False)
 
-More information on why class methods for constructing objects are awesome can be found in this insightful `blog post <http://as.ynchrono.us/2014/12/asynchronous-object-initialization.html>`_.
+More information on why class methods for constructing objects are awesome can be found in this insightful `blog post <https://as.ynchrono.us/2014/12/asynchronous-object-initialization.html>`_.
 
 Default factories can also be set using a decorator.
 The method receives the partially initialized instance which enables you to base a default value on other attributes:
@@ -282,6 +347,16 @@ The method receives the partially initialized instance which enables you to base
    C(x=1, y=2)
 
 
+And since the case of ``attr.ib(default=attr.Factory(f))`` is so common, ``attrs`` also comes with syntactic sugar for it:
+
+.. doctest::
+
+   >>> @attr.s
+   ... class C(object):
+   ...     x = attr.ib(factory=list)
+   >>> C()
+   C(x=[])
+
 .. _examples_validators:
 
 Validators
@@ -289,20 +364,9 @@ Validators
 
 Although your initializers should do as little as possible (ideally: just initialize your instance according to the arguments!), it can come in handy to do some kind of validation on the arguments.
 
-``attrs`` offers two ways to define validators for each attribute and it's up to you to choose which one suites better your style and project.
+``attrs`` offers two ways to define validators for each attribute and it's up to you to choose which one suits your style and project better.
 
-
-Decorator
-~~~~~~~~~
-
-The more straightforward way is by using the attribute's ``validator`` method as a decorator.
-The method has to accept three arguments:
-
-#. the *instance* that's being validated (aka ``self``),
-#. the *attribute* that it's validating, and finally
-#. the *value* that is passed for it.
-
-If the value does not pass the validator's standards, it just raises an appropriate exception.
+You can use a decorator:
 
 .. doctest::
 
@@ -320,15 +384,7 @@ If the value does not pass the validator's standards, it just raises an appropri
       ...
    ValueError: x must be smaller or equal to 42
 
-
-Callables
-~~~~~~~~~
-
-If you want to re-use your validators, you should have a look at the ``validator`` argument to :func:`attr.ib()`.
-
-It takes either a callable or a list of callables (usually functions) and treats them as validators that receive the same arguments as with the decorator approach.
-
-Since the validators runs *after* the instance is initialized, you can refer to other attributes while validating:
+...or a callable...
 
 .. doctest::
 
@@ -347,18 +403,28 @@ Since the validators runs *after* the instance is initialized, you can refer to 
       ...
    ValueError: 'x' has to be smaller than 'y'!
 
-This example also shows of some syntactic sugar for using the :func:`attr.validators.and_` validator: if you pass a list, all validators have to pass.
-
-``attrs`` won't intercept your changes to those attributes but you can always call :func:`attr.validate` on any instance to verify that it's still valid:
+...or both at once:
 
 .. doctest::
 
-   >>> i = C(4, 5)
-   >>> i.x = 5  # works, no magic here
-   >>> attr.validate(i)
+   >>> @attr.s
+   ... class C(object):
+   ...     x = attr.ib(validator=attr.validators.instance_of(int))
+   ...     @x.validator
+   ...     def fits_byte(self, attribute, value):
+   ...         if not 0 <= value < 256:
+   ...             raise ValueError("value out of bounds")
+   >>> C(128)
+   C(x=128)
+   >>> C("128")
    Traceback (most recent call last):
       ...
-   ValueError: 'x' has to be smaller than 'y'!
+   TypeError: ("'x' must be <class 'int'> (got '128' that is a <class 'str'>).", Attribute(name='x', default=NOTHING, validator=[<instance_of validator for type <class 'int'>>, <function fits_byte at 0x10fd7a0d0>], repr=True, cmp=True, hash=True, init=True, metadata=mappingproxy({}), type=None, converter=one, kw_only=False), <class 'int'>, '128')
+   >>> C(256)
+   Traceback (most recent call last):
+      ...
+   ValueError: value out of bounds
+
 
 ``attrs`` ships with a bunch of validators, make sure to :ref:`check them out <api_validators>` before writing your own:
 
@@ -372,40 +438,9 @@ This example also shows of some syntactic sugar for using the :func:`attr.valida
    >>> C("42")
    Traceback (most recent call last):
       ...
-   TypeError: ("'x' must be <type 'int'> (got '42' that is a <type 'str'>).", Attribute(name='x', default=NOTHING, factory=NOTHING, validator=<instance_of validator for type <type 'int'>>, type=None), <type 'int'>, '42')
+   TypeError: ("'x' must be <type 'int'> (got '42' that is a <type 'str'>).", Attribute(name='x', default=NOTHING, factory=NOTHING, validator=<instance_of validator for type <type 'int'>>, type=None, kw_only=False), <type 'int'>, '42')
 
-Of course you can mix and match the two approaches at your convenience:
-
-.. doctest::
-
-   >>> @attr.s
-   ... class C(object):
-   ...     x = attr.ib(validator=attr.validators.instance_of(int))
-   ...     @x.validator
-   ...     def fits_byte(self, attribute, value):
-   ...         if not 0 < value < 256:
-   ...             raise ValueError("value out of bounds")
-   >>> C(128)
-   C(x=128)
-   >>> C("128")
-   Traceback (most recent call last):
-      ...
-   TypeError: ("'x' must be <class 'int'> (got '128' that is a <class 'str'>).", Attribute(name='x', default=NOTHING, validator=[<instance_of validator for type <class 'int'>>, <function fits_byte at 0x10fd7a0d0>], repr=True, cmp=True, hash=True, init=True, metadata=mappingproxy({}), type=None, converter=one), <class 'int'>, '128')
-   >>> C(256)
-   Traceback (most recent call last):
-      ...
-   ValueError: value out of bounds
-
-And finally you can disable validators globally:
-
-   >>> attr.set_run_validators(False)
-   >>> C("128")
-   C(x='128')
-   >>> attr.set_run_validators(True)
-   >>> C("128")
-   Traceback (most recent call last):
-      ...
-   TypeError: ("'x' must be <class 'int'> (got '128' that is a <class 'str'>).", Attribute(name='x', default=NOTHING, validator=[<instance_of validator for type <class 'int'>>, <function fits_byte at 0x10fd7a0d0>], repr=True, cmp=True, hash=True, init=True, metadata=mappingproxy({}), type=None, converter=None), <class 'int'>, '128')
+Check out :ref:`validators` for more details.
 
 
 Conversion
@@ -423,23 +458,7 @@ This can be useful for doing type-conversions on values that you don't want to f
     >>> o.x
     1
 
-Converters are run *before* validators, so you can use validators to check the final form of the value.
-
-.. doctest::
-
-    >>> def validate_x(instance, attribute, value):
-    ...     if value < 0:
-    ...         raise ValueError("x must be be at least 0.")
-    >>> @attr.s
-    ... class C(object):
-    ...     x = attr.ib(converter=int, validator=validate_x)
-    >>> o = C("0")
-    >>> o.x
-    0
-    >>> C("-1")
-    Traceback (most recent call last):
-        ...
-    ValueError: x must be be at least 0.
+Check out :ref:`converters` for more details.
 
 
 .. _metadata:
@@ -509,6 +528,7 @@ If you don't mind annotating *all* attributes, you can even drop the :func:`attr
    >>> AutoC.cls_var
    5
 
+The generated ``__init__`` method will have an attribute called ``__annotations__`` that contains this type information.
 
 .. warning::
 
@@ -521,12 +541,8 @@ If you don't mind annotating *all* attributes, you can even drop the :func:`attr
 Slots
 -----
 
-By default, instances of classes have a dictionary for attribute storage.
-This wastes space for objects having very few data attributes.
-The space consumption can become significant when creating large numbers of instances.
-
-Normal Python classes can avoid using a separate dictionary for each instance of a class by `defining <https://docs.python.org/3/reference/datamodel.html#slots>`_ ``__slots__``.
-For ``attrs`` classes it's enough to set ``slots=True``:
+:term:`Slotted classes` have a bunch of advantages on CPython.
+Defining ``__slots__`` by hand is tedious, in ``attrs`` it's just a matter of passing ``slots=True``:
 
 .. doctest::
 
@@ -534,59 +550,6 @@ For ``attrs`` classes it's enough to set ``slots=True``:
    ... class Coordinates(object):
    ...     x = attr.ib()
    ...     y = attr.ib()
-
-
-.. note::
-
-    ``attrs`` slot classes can inherit from other classes just like non-slot classes, but some of the benefits of slot classes are lost if you do that.
-    If you must inherit from other classes, try to inherit only from other slot classes.
-
-Slot classes are a little different than ordinary, dictionary-backed classes:
-
-- Assigning to a non-existent attribute of an instance will result in an ``AttributeError`` being raised.
-  Depending on your needs, this might be a good thing since it will let you catch typos early.
-  This is not the case if your class inherits from any non-slot classes.
-
-  .. doctest::
-
-     >>> @attr.s(slots=True)
-     ... class Coordinates(object):
-     ...     x = attr.ib()
-     ...     y = attr.ib()
-     ...
-     >>> c = Coordinates(x=1, y=2)
-     >>> c.z = 3
-     Traceback (most recent call last):
-         ...
-     AttributeError: 'Coordinates' object has no attribute 'z'
-
-- Since non-slot classes cannot be turned into slot classes after they have been created, ``attr.s(slots=True)`` will *replace* the class it is applied to with a copy.
-  In almost all cases this isn't a problem, but we mention it for the sake of completeness.
-
-  * One notable problem is that certain metaclass features like ``__init_subclass__`` do not work with slot classes.
-
-- Using :mod:`pickle` with slot classes requires pickle protocol 2 or greater.
-  Python 2 uses protocol 0 by default so the protocol needs to be specified.
-  Python 3 uses protocol 3 by default.
-  You can support protocol 0 and 1 by implementing :meth:`__getstate__ <object.__getstate__>` and :meth:`__setstate__ <object.__setstate__>` methods yourself.
-  Those methods are created for frozen slot classes because they won't pickle otherwise.
-  `Think twice <https://www.youtube.com/watch?v=7KnfGDajDQw>`_ before using :mod:`pickle` though.
-
-- As always with slot classes, you must specify a ``__weakref__`` slot if you wish for the class to be weak-referenceable.
-  Here's how it looks using ``attrs``:
-
-  .. doctest::
-
-    >>> import weakref
-    >>> @attr.s(slots=True)
-    ... class C(object):
-    ...     __weakref__ = attr.ib(init=False, hash=False, repr=False, cmp=False)
-    ...     x = attr.ib()
-    >>> c = C(1)
-    >>> weakref.ref(c)
-    <weakref at 0x...; to 'C' at 0x...>
-
-All in all, setting ``slots=True`` is usually a very good idea.
 
 
 Immutability
