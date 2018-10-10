@@ -3,6 +3,7 @@ Section: python
 Priority: optional
 Maintainer: Debian Python Modules Team <python-modules-team@lists.alioth.debian.org>
 Uploaders: Tristan Seligmann <mithrandi@debian.org>
+Rules-Requires-Root: no
 Build-Depends:
  debhelper (>= 11),
  dh-python (>= 3.20180313~),
