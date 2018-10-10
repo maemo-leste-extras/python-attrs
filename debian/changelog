@@ -3,15 +3,12 @@ python-attrs (18.2.0-1) UNRELEASED; urgency=medium
   * Team upload.
   * New upstream release (Closes: #901013)
 
- -- Salvo 'LtWorf' Tomaselli <tiposchi@tiscali.it>  Wed, 10 Oct 2018 10:38:39 +0200
-
-python-attrs (17.4.0-3) UNRELEASED; urgency=medium
-
+  [ Ondřej Nový ]
   * d/tests: Use AUTOPKGTEST_TMP instead of ADTTMP
   * Convert git repository from git-dpm to gbp layout
   * Use 'python3 -m sphinx' instead of sphinx-build for building docs
 
- -- Ondřej Nový <onovy@debian.org>  Tue, 17 Apr 2018 13:21:25 +0200
+ -- Salvo 'LtWorf' Tomaselli <tiposchi@tiscali.it>  Wed, 10 Oct 2018 10:38:39 +0200
 
 python-attrs (17.4.0-2) unstable; urgency=medium
 
