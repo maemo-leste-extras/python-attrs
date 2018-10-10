@@ -1,3 +1,10 @@
+python-attrs (18.2.0-1) UNRELEASED; urgency=medium
+
+  * Team upload.
+  * New upstream release (Closes: #901013)
+
+ -- Salvo 'LtWorf' Tomaselli <tiposchi@tiscali.it>  Wed, 10 Oct 2018 10:38:39 +0200
+
 python-attrs (17.4.0-3) UNRELEASED; urgency=medium
 
   * d/tests: Use AUTOPKGTEST_TMP instead of ADTTMP
