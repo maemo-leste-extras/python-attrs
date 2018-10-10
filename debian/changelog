@@ -2,6 +2,7 @@ python-attrs (18.2.0-1) UNRELEASED; urgency=medium
 
   * Team upload.
   * New upstream release (Closes: #901013)
+  * Mark python-attr-doc Multi-Arch: foreign
 
   [ Ondřej Nový ]
   * d/tests: Use AUTOPKGTEST_TMP instead of ADTTMP
