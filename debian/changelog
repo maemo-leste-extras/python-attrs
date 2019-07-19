@@ -1,8 +1,12 @@
 python-attrs (19.3.0-1) unstable; urgency=medium
 
+  [ Adam Cecile ]
   * New upstream release.
   * Update intersphinx mapping patch to prepare to support zope.interface
     (but this package does not build sphinx doc yet).
+
+  [ Ondřej Nový ]
+  * Use debhelper-compat instead of debian/compat.
 
  -- Adam Cecile <acecile@le-vert.net>  Tue, 26 Nov 2019 15:01:39 +0100
 
