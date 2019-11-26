@@ -4,6 +4,8 @@ python-attrs (19.3.0-1) unstable; urgency=medium
   * New upstream release.
   * Update intersphinx mapping patch to prepare to support zope.interface
     (but this package does not build sphinx doc yet).
+  * Fix typo in debian/control.
+  * Improve clean target to be able to build twice in a row.
 
   [ Ondřej Nový ]
   * Use debhelper-compat instead of debian/compat.
