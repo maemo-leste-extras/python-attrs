@@ -8,6 +8,11 @@ export PYBUILD_AFTER_TEST=rm -r {build_dir}/.hypothesis {build_dir}/conftest.py
 %:
 	dh $@ --with python2,python3,pypy,sphinxdoc --buildsystem=pybuild
 
+override_dh_auto_clean:
+	dh_auto_clean
+	rm -rf .pytest_cache
+	rm -rf src/attrs.egg-info
+
 override_dh_auto_build:
 	dh_auto_build
 	PYTHONPATH=$(shell pybuild --print build_dir --interpreter python3) \
