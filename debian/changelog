@@ -1,4 +1,4 @@
-python-attrs (19.3.0-1) UNRELEASED; urgency=medium
+python-attrs (19.3.0-1) unstable; urgency=medium
 
   [ Adam Cecile ]
   * New upstream release.
@@ -21,7 +21,7 @@ python-attrs (19.3.0-1) UNRELEASED; urgency=medium
       https://github.com/python-attrs/attrs/commit/0563f44b477666143fb81e9c3822de1f87b9a8c5 ;
       Closes: #950449
 
- -- Sandro Tosi <morph@debian.org>  Sat, 01 Feb 2020 16:47:42 -0500
+ -- Sandro Tosi <morph@debian.org>  Sat, 01 Feb 2020 17:46:43 -0500
 
 python-attrs (18.2.0-1) unstable; urgency=medium
 
