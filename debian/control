@@ -14,7 +14,6 @@ Build-Depends:
  python-pytest,
  python-setuptools,
  python-six,
- python-sphinx-rtd-theme,
  python-zope.interface,
  python3-all,
  python3-doc,
