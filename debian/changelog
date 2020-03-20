@@ -6,6 +6,7 @@ python-attrs (19.3.0-2) UNRELEASED; urgency=medium
     supported py3 versions.
   * Bump Standards-Version to 4.5.0.
   * d/gbp.conf: Set debian/master as default branch according to DEP-14.
+  * d/salsa-ci.yml: enable salsa-ci.
 
  -- Emmanuel Arias <eamanu@yaerobi.com>  Fri, 20 Mar 2020 10:09:45 -0300
 
