@@ -1,8 +1,8 @@
-python-attrs (19.3.0-3) UNRELEASED; urgency=medium
+python-attrs (19.3.0-3) unstable; urgency=medium
 
   * Dont run unittests for python2 binary, to reduce pytest rdeps
 
- -- Sandro Tosi <morph@debian.org>  Mon, 13 Apr 2020 19:15:39 -0400
+ -- Sandro Tosi <morph@debian.org>  Mon, 13 Apr 2020 19:17:19 -0400
 
 python-attrs (19.3.0-2) unstable; urgency=medium
 
