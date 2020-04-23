@@ -1,8 +1,8 @@
-python-attrs (19.3.0-4) UNRELEASED; urgency=medium
+python-attrs (19.3.0-4) unstable; urgency=medium
 
   * Drop python2 support; Closes: #937587
 
- -- Sandro Tosi <morph@debian.org>  Thu, 23 Apr 2020 01:12:41 -0400
+ -- Sandro Tosi <morph@debian.org>  Thu, 23 Apr 2020 01:15:28 -0400
 
 python-attrs (19.3.0-3) unstable; urgency=medium
 
