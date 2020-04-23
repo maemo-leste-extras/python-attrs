@@ -1,3 +1,9 @@
+python-attrs (19.3.0-4) UNRELEASED; urgency=medium
+
+  * Drop python2 support; Closes: #937587
+
+ -- Sandro Tosi <morph@debian.org>  Thu, 23 Apr 2020 01:12:41 -0400
+
 python-attrs (19.3.0-3) unstable; urgency=medium
 
   * Dont run unittests for python2 binary, to reduce pytest rdeps
