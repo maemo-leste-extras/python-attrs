@@ -7,8 +7,6 @@ Rules-Requires-Root: no
 Build-Depends:
  debhelper-compat (= 11),
  dh-python (>= 3.20180313~),
- pypy,
- pypy-setuptools,
  python3-all,
  python3-doc,
  python3-hypothesis,
@@ -41,24 +39,6 @@ Description: Attributes without boilerplate (Python 3)
  without writing dull boilerplate code again and again.
  .
  This package contains attrs packaged for Python 3.
-
-Package: pypy-attr
-Architecture: all
-Depends: ${misc:Depends}, ${pypy:Depends}
-Recommends: ${pypy:Recommends}
-Suggests: python-attr-doc, ${pypy:Suggests}
-Description: Attributes without boilerplate (PyPy)
- attrs is an MIT-licensed Python package with class decorators that ease the
- chores of implementing the most common attribute-related object protocols.
- .
- You just specify the attributes to work with and attrs gives you:
-   - a nice human-readable __repr__,
-   - a complete set of comparison methods,
-   - an initializer,
-   - and much more
- without writing dull boilerplate code again and again.
- .
- This package contains attrs packaged for PyPy.
 
 Package: python-attr-doc
 Section: doc

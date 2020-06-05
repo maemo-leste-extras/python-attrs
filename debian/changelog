@@ -1,3 +1,9 @@
+python-attrs (19.3.0-5) UNRELEASED; urgency=medium
+
+  * Drop PyPy support.
+
+ -- Ondřej Nový <onovy@debian.org>  Fri, 05 Jun 2020 16:13:42 +0200
+
 python-attrs (19.3.0-4) unstable; urgency=medium
 
   * Drop python2 support; Closes: #937587
