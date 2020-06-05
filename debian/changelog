@@ -1,6 +1,7 @@
 python-attrs (19.3.0-5) UNRELEASED; urgency=medium
 
   * Drop PyPy support.
+  * Bump debhelper compat level to 13.
 
  -- Ondřej Nový <onovy@debian.org>  Fri, 05 Jun 2020 16:13:42 +0200
 
