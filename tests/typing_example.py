@@ -183,3 +183,54 @@ class WithCustomRepr:
 class OrderFlags:
     a = attr.ib(eq=False, order=False)
     b = attr.ib(eq=True, order=True)
+
+
+# on_setattr hooks
+@attr.s(on_setattr=attr.setters.validate)
+class ValidatedSetter:
+    a = attr.ib()
+    b = attr.ib(on_setattr=attr.setters.NO_OP)
+    c = attr.ib(on_setattr=attr.setters.frozen)
+    d = attr.ib(on_setattr=[attr.setters.convert, attr.setters.validate])
+    d = attr.ib(
+        on_setattr=attr.setters.pipe(
+            attr.setters.convert, attr.setters.validate
+        )
+    )
+
+
+# Auto-detect
+# XXX: needs support in mypy
+# @attr.s(auto_detect=True)
+# class AutoDetect:
+#     x: int
+
+#     def __init__(self, x: int):
+#         self.x = x
+
+# Provisional APIs
+@attr.define(order=True)
+class NGClass:
+    x: int = attr.field(default=42)
+
+
+# XXX: needs support in mypy
+# ngc = NGClass(1)
+
+
+@attr.mutable(slots=False)
+class NGClass2:
+    x: int
+
+
+# XXX: needs support in mypy
+# ngc2 = NGClass2(1)
+
+
+@attr.frozen(str=True)
+class NGFrozen:
+    x: int
+
+
+# XXX: needs support in mypy
+# ngf = NGFrozen(1)
