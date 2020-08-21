@@ -26,7 +26,6 @@ CLASSIFIERS = [
     "Programming Language :: Python :: 2",
     "Programming Language :: Python :: 2.7",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.4",
     "Programming Language :: Python :: 3.5",
     "Programming Language :: Python :: 3.6",
     "Programming Language :: Python :: 3.7",
@@ -37,9 +36,10 @@ CLASSIFIERS = [
 ]
 INSTALL_REQUIRES = []
 EXTRAS_REQUIRE = {
-    "docs": ["sphinx", "zope.interface"],
+    "docs": ["sphinx", "sphinx-rtd-theme", "zope.interface"],
     "tests": [
-        "coverage",
+        # 5.0 introduced toml; parallel was broken until 5.0.2
+        "coverage[toml]>=5.0.2",
         "hypothesis",
         "pympler",
         "pytest>=4.3.0",  # 4.3.0 dropped last use of `convert`
@@ -50,9 +50,6 @@ EXTRAS_REQUIRE = {
 EXTRAS_REQUIRE["dev"] = (
     EXTRAS_REQUIRE["tests"] + EXTRAS_REQUIRE["docs"] + ["pre-commit"]
 )
-EXTRAS_REQUIRE["azure-pipelines"] = EXTRAS_REQUIRE["tests"] + [
-    "pytest-azurepipelines"
-]
 
 ###############################################################################
 
@@ -61,7 +58,7 @@ HERE = os.path.abspath(os.path.dirname(__file__))
 
 def read(*parts):
     """
-    Build an absolute path from *parts* and and return the contents of the
+    Build an absolute path from *parts* and return the contents of the
     resulting file.  Assume UTF-8 encoding.
     """
     with codecs.open(os.path.join(HERE, *parts), "rb", "utf-8") as f:
@@ -124,4 +121,5 @@ if __name__ == "__main__":
         install_requires=INSTALL_REQUIRES,
         extras_require=EXTRAS_REQUIRE,
         include_package_data=True,
+        options={"bdist_wheel": {"universal": "1"}},
     )
