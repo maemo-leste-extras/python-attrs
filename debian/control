@@ -14,9 +14,8 @@ Build-Depends:
  python3-setuptools,
  python3-six,
  python3-sphinx,
+ python3-sphinx-rtd-theme,
  python3-zope.interface,
-# Does not exists yet but should
-# python-zope.interface-doc,
 Standards-Version: 4.5.0
 Homepage: https://attrs.readthedocs.org/
 Vcs-Git: https://salsa.debian.org/python-team/packages/python-attrs.git

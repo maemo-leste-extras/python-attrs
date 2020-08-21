@@ -8,6 +8,7 @@ python-attrs (20.1.0-1) UNRELEASED; urgency=medium
 
   [ Tristan Seligmann ]
   * New upstream release.
+  * Depend on python3-sphinx-rtd-theme.
 
  -- Tristan Seligmann <mithrandi@debian.org>  Mon, 02 Nov 2020 09:38:26 +0200
 
