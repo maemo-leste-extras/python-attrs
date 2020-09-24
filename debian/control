@@ -19,8 +19,8 @@ Build-Depends:
 # python-zope.interface-doc,
 Standards-Version: 4.5.0
 Homepage: https://attrs.readthedocs.org/
-Vcs-Git: https://salsa.debian.org/python-team/modules/python-attrs.git
-Vcs-Browser: https://salsa.debian.org/python-team/modules/python-attrs
+Vcs-Git: https://salsa.debian.org/python-team/packages/python-attrs.git
+Vcs-Browser: https://salsa.debian.org/python-team/packages/python-attrs
 
 Package: python3-attr
 Architecture: all
