@@ -1,3 +1,10 @@
+python-attrs (19.3.0-6) UNRELEASED; urgency=medium
+
+  * d/control: Update Maintainer field with new Debian Python Team
+    contact address.
+
+ -- Ondřej Nový <onovy@debian.org>  Thu, 24 Sep 2020 08:55:15 +0200
+
 python-attrs (19.3.0-5) unstable; urgency=medium
 
   * Team upload.

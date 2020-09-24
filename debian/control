@@ -1,7 +1,7 @@
 Source: python-attrs
 Section: python
 Priority: optional
-Maintainer: Debian Python Modules Team <python-modules-team@lists.alioth.debian.org>
+Maintainer: Debian Python Team <team+python@tracker.debian.org>
 Uploaders: Tristan Seligmann <mithrandi@debian.org>
 Rules-Requires-Root: no
 Build-Depends:
