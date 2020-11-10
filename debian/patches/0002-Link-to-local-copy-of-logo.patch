@@ -7,10 +7,10 @@ Subject: Link to local copy of logo.
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/CHANGELOG.rst b/CHANGELOG.rst
-index 73231b2..0c3b009 100644
+index 11dd81a..30753da 100644
 --- a/CHANGELOG.rst
 +++ b/CHANGELOG.rst
-@@ -506,7 +506,7 @@ To encourage more participation, the project has also been moved into a `dedicat
+@@ -588,7 +588,7 @@ To encourage more participation, the project has also been moved into a `dedicat
  
  ``attrs`` also has a logo now!
  
