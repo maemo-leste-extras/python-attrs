@@ -15,6 +15,9 @@ PROJECT_URLS = {
     "Documentation": "https://www.attrs.org/",
     "Bug Tracker": "https://github.com/python-attrs/attrs/issues",
     "Source Code": "https://github.com/python-attrs/attrs",
+    "Funding": "https://github.com/sponsors/hynek",
+    "Tidelift": "https://tidelift.com/subscription/pkg/pypi-attrs?"
+    "utm_source=pypi-attrs&utm_medium=pypi",
 }
 CLASSIFIERS = [
     "Development Status :: 5 - Production/Stable",
@@ -30,23 +33,24 @@ CLASSIFIERS = [
     "Programming Language :: Python :: 3.6",
     "Programming Language :: Python :: 3.7",
     "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: Implementation :: CPython",
     "Programming Language :: Python :: Implementation :: PyPy",
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
 INSTALL_REQUIRES = []
 EXTRAS_REQUIRE = {
-    "docs": ["sphinx", "sphinx-rtd-theme", "zope.interface"],
-    "tests": [
+    "docs": ["furo", "sphinx", "zope.interface"],
+    "tests_no_zope": [
         # 5.0 introduced toml; parallel was broken until 5.0.2
         "coverage[toml]>=5.0.2",
         "hypothesis",
         "pympler",
         "pytest>=4.3.0",  # 4.3.0 dropped last use of `convert`
         "six",
-        "zope.interface",
     ],
 }
+EXTRAS_REQUIRE["tests"] = EXTRAS_REQUIRE["tests_no_zope"] + ["zope.interface"]
 EXTRAS_REQUIRE["dev"] = (
     EXTRAS_REQUIRE["tests"] + EXTRAS_REQUIRE["docs"] + ["pre-commit"]
 )

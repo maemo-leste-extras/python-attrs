@@ -2,6 +2,10 @@
 Python 3-only integration tests for provisional next generation APIs.
 """
 
+import re
+
+from functools import partial
+
 import pytest
 
 import attr
@@ -101,6 +105,31 @@ class TestNextGen:
 
         assert OldSchool(1) == OldSchool(1)
 
+        # Test with maybe_cls = None
+        @attr.define()
+        class OldSchool2:
+            x = attr.field()
+
+        assert OldSchool2(1) == OldSchool2(1)
+
+    def test_auto_attribs_detect_annotations(self):
+        """
+        define correctly detects if a class has type annotations.
+        """
+
+        @attr.define
+        class NewSchool:
+            x: int
+
+        assert NewSchool(1) == NewSchool(1)
+
+        # Test with maybe_cls = None
+        @attr.define()
+        class NewSchool2:
+            x: int
+
+        assert NewSchool2(1) == NewSchool2(1)
+
     def test_exception(self):
         """
         Exceptions are detected and correctly handled.
@@ -133,3 +162,110 @@ class TestNextGen:
 
         with pytest.raises(attr.exceptions.FrozenInstanceError):
             f.x = 2
+
+    def test_auto_detect_eq(self):
+        """
+        auto_detect=True works for eq.
+
+        Regression test for #670.
+        """
+
+        @attr.define
+        class C:
+            def __eq__(self, o):
+                raise ValueError()
+
+        with pytest.raises(ValueError):
+            C() == C()
+
+    def test_subclass_frozen(self):
+        """
+        It's possible to subclass an `attr.frozen` class and the frozen-ness is
+        inherited.
+        """
+
+        @attr.frozen
+        class A:
+            a: int
+
+        @attr.frozen
+        class B(A):
+            b: int
+
+        @attr.define(on_setattr=attr.setters.NO_OP)
+        class C(B):
+            c: int
+
+        assert B(1, 2) == B(1, 2)
+        assert C(1, 2, 3) == C(1, 2, 3)
+
+        with pytest.raises(attr.exceptions.FrozenInstanceError):
+            A(1).a = 1
+
+        with pytest.raises(attr.exceptions.FrozenInstanceError):
+            B(1, 2).a = 1
+
+        with pytest.raises(attr.exceptions.FrozenInstanceError):
+            B(1, 2).b = 2
+
+        with pytest.raises(attr.exceptions.FrozenInstanceError):
+            C(1, 2, 3).c = 3
+
+    def test_catches_frozen_on_setattr(self):
+        """
+        Passing frozen=True and on_setattr hooks is caught, even if the
+        immutability is inherited.
+        """
+
+        @attr.define(frozen=True)
+        class A:
+            pass
+
+        with pytest.raises(
+            ValueError, match="Frozen classes can't use on_setattr."
+        ):
+
+            @attr.define(frozen=True, on_setattr=attr.setters.validate)
+            class B:
+                pass
+
+        with pytest.raises(
+            ValueError,
+            match=re.escape(
+                "Frozen classes can't use on_setattr "
+                "(frozen-ness was inherited)."
+            ),
+        ):
+
+            @attr.define(on_setattr=attr.setters.validate)
+            class C(A):
+                pass
+
+    @pytest.mark.parametrize(
+        "decorator",
+        [
+            partial(attr.s, frozen=True, slots=True, auto_exc=True),
+            attr.frozen,
+            attr.define,
+            attr.mutable,
+        ],
+    )
+    def test_discard_context(self, decorator):
+        """
+        raise from None works.
+
+        Regression test for #703.
+        """
+
+        @decorator
+        class MyException(Exception):
+            x: str = attr.ib()
+
+        with pytest.raises(MyException) as ei:
+            try:
+                raise ValueError()
+            except ValueError:
+                raise MyException("foo") from None
+
+        assert "foo" == ei.value.x
+        assert ei.value.__cause__ is None
