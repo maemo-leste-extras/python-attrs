@@ -1,3 +1,9 @@
+python-attrs (20.3.0-1) unstable; urgency=medium
+
+  * New upstream release.
+
+ -- Tristan Seligmann <mithrandi@debian.org>  Tue, 10 Nov 2020 10:38:37 +0200
+
 python-attrs (20.1.0-1) unstable; urgency=medium
 
   [ Ondřej Nový ]
