@@ -6,6 +6,88 @@ The third digit is only for regressions.
 
 .. towncrier release notes start
 
+20.3.0 (2020-11-05)
+-------------------
+
+Backward-incompatible Changes
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- ``attr.define()``, ``attr.frozen()``, ``attr.mutable()``, and ``attr.field()`` remain **provisional**.
+
+  This release does **not** change change anything about them and they are already used widely in production though.
+
+  If you wish to use them together with mypy, you can simply drop `this plugin <https://gist.github.com/hynek/1e3844d0c99e479e716169034b5fa963#file-attrs_ng_plugin-py>`_ into your project.
+
+  Feel free to provide feedback to them in the linked issue #668.
+
+  We will release the ``attrs`` namespace once we have the feeling that the APIs have properly settled.
+  `#668 <https://github.com/python-attrs/attrs/issues/668>`_
+
+
+Changes
+^^^^^^^
+
+- ``attr.s()`` now has a *field_transformer* hook that is called for all ``Attribute``\ s and returns a (modified or updated) list of ``Attribute`` instances.
+  ``attr.asdict()`` has a *value_serializer* hook that can change the way values are converted.
+  Both hooks are meant to help with data (de-)serialization workflows.
+  `#653 <https://github.com/python-attrs/attrs/issues/653>`_
+- ``kw_only=True`` now works on Python 2.
+  `#700 <https://github.com/python-attrs/attrs/issues/700>`_
+- ``raise from`` now works on frozen classes on PyPy.
+  `#703 <https://github.com/python-attrs/attrs/issues/703>`_,
+  `#712 <https://github.com/python-attrs/attrs/issues/712>`_
+- ``attr.asdict()`` and ``attr.astuple()`` now treat ``frozenset``\ s like ``set``\ s with regards to the *retain_collection_types* argument.
+  `#704 <https://github.com/python-attrs/attrs/issues/704>`_
+- The type stubs for ``attr.s()`` and ``attr.make_class()`` are not missing the *collect_by_mro* argument anymore.
+  `#711 <https://github.com/python-attrs/attrs/issues/711>`_
+
+
+----
+
+
+20.2.0 (2020-09-05)
+-------------------
+
+Backward-incompatible Changes
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- ``attr.define()``, ``attr.frozen()``, ``attr.mutable()``, and ``attr.field()`` remain **provisional**.
+
+  This release fixes a bunch of bugs and ergonomics but they remain mostly unchanged.
+
+  If you wish to use them together with mypy, you can simply drop `this plugin <https://gist.github.com/hynek/1e3844d0c99e479e716169034b5fa963#file-attrs_ng_plugin-py>`_ into your project.
+
+  Feel free to provide feedback to them in the linked issue #668.
+
+  We will release the ``attrs`` namespace once we have the feeling that the APIs have properly settled.
+  `#668 <https://github.com/python-attrs/attrs/issues/668>`_
+
+
+Changes
+^^^^^^^
+
+- ``attr.define()`` et al now correct detect ``__eq__`` and ``__ne__``.
+  `#671 <https://github.com/python-attrs/attrs/issues/671>`_
+- ``attr.define()`` et al's hybrid behavior now also works correctly when arguments are passed.
+  `#675 <https://github.com/python-attrs/attrs/issues/675>`_
+- It's possible to define custom ``__setattr__`` methods on slotted classes again.
+  `#681 <https://github.com/python-attrs/attrs/issues/681>`_
+- In 20.1.0 we introduced the ``inherited`` attribute on the ``attr.Attribute`` class to differentiate attributes that have been inherited and those that have been defined directly on the class.
+
+  It has shown to be problematic to involve that attribute when comparing instances of ``attr.Attribute`` though, because when sub-classing, attributes from base classes are suddenly not equal to themselves in a super class.
+
+  Therefore the ``inherited`` attribute will now be ignored when hashing and comparing instances of ``attr.Attribute``.
+  `#684 <https://github.com/python-attrs/attrs/issues/684>`_
+- ``zope.interface`` is now a "soft dependency" when running the test suite; if ``zope.interface`` is not installed when running the test suite, the interface-related tests will be automatically skipped.
+  `#685 <https://github.com/python-attrs/attrs/issues/685>`_
+- The ergonomics of creating frozen classes using ``@define(frozen=True)`` and sub-classing frozen classes has been improved:
+  you don't have to set ``on_setattr=None`` anymore.
+  `#687 <https://github.com/python-attrs/attrs/issues/687>`_
+
+
+----
+
+
 20.1.0 (2020-08-20)
 -------------------
 
